@@ -33,6 +33,7 @@ PAY_BUTTON_IMAGE = get_image_path(PAY_BUTTON_IMAGE_NAME)
 UPI_IMAGE = get_image_path(UPI_IMAGE_NAME)
 FINAL_PAY_BUTTON_IMAGE = get_image_path(FINAL_PAY_BUTTON_IMAGE_NAME)
 SCANNER_IMAGE = get_image_path(SCANNER_IMAGE_NAME)
+CONTINUE_BUTTON_IMAGE = get_image_path(CONTINUE_BUTTON_IMAGE_NAME)
 
 
 # --- Helper Functions ---
@@ -65,8 +66,6 @@ def wait_and_click_indefinitely(image_path, description, wait_after=0.5, graysca
                 return True
 
             # --- HIGH SPEED OPTIMIZATION ---
-            # Reduced sleep from 0.5s to 0.05s (20 checks per second)
-            # This ensures instant reaction when the button becomes clear.
             time.sleep(0.05)
 
         except Exception:
@@ -175,7 +174,7 @@ def execute_first_page_sequence():
         time.sleep(0.8)
 
     else:
-        # Standard Mode
+        # Standard
         initial_tabs = 7 if WORK_MODE.upper() == "AFTERNOON" else 6
         for _ in range(initial_tabs): keyboard.send('tab'); time.sleep(0.05)
         keyboard.send('enter');
@@ -252,7 +251,7 @@ def fill_complete_member_flow(user):
     print(f"--> DONE: {user['name']}")
 
 
-# --- Part 3 Logic (Strict Wait & Fast Type) ---
+# --- Part 3 Logic (Continue -> Fast Payment) ---
 def trigger_fill_next():
     if not state.active: return
     pyautogui.keyUp('alt');
@@ -265,49 +264,51 @@ def trigger_fill_next():
     fill_complete_member_flow(USER_DATA[state.user_index])
     state.user_index += 1
 
+    # --- THIS BLOCK EXECUTES ONCE ALL USERS ARE FILLED ---
     if state.user_index >= MANUAL_PAX_COUNT:
-        if wait_and_click_indefinitely(PHONE_BOX_IMAGE, "Phone Number Box"):
 
-            # --- FAST TYPING ---
-            # Uses zero-delay typing to fill phone number instantly
-            instant_type(PHONE_NUMBER)
-            print("[Part 2] Finished.")
+        # --- 1. CONTINUE BUTTON + ENTER ---
+        print("\n[Sequence] All users filled. Looking for 'Continue' button...")
+        if wait_and_click_indefinitely(CONTINUE_BUTTON_IMAGE, "Continue Button", wait_after=0.1):
+            keyboard.send('enter')  # Fast Enter
+            print("[Sequence] Clicked Continue + Pressed Enter.")
 
-            if PERFORM_PAYMENT_PAGE:
-                print(f"\n[Part 3] Payment Page Started (Fast Mode)...")
-                print("--> Waiting for OTP verification (Active Button)...")
+            # --- 2. PHONE NUMBER ---
+            if wait_and_click_indefinitely(PHONE_BOX_IMAGE, "Phone Number Box"):
+                instant_type(PHONE_NUMBER)  # Fast Type
+                print("[Part 2] Finished.")
 
-                # --- 1. PAY BUTTON (STRICT WAIT) ---
-                # grayscale=False (Checks exact color)
-                # confidence=0.95 (Checks exact sharpness)
-                # This forces it to wait until the button is CLEAR.
-                # wait_after=0.1 allows immediate transition to the next step.
-                if wait_and_click_indefinitely(PAY_BUTTON_IMAGE, "Pay Button", wait_after=0.1, grayscale=False,
-                                               confidence=0.95):
+                if PERFORM_PAYMENT_PAGE:
+                    print(f"\n[Part 3] Payment Page Started (Fast Mode)...")
+                    print("--> Waiting for OTP verification (Active Button)...")
 
-                    # --- 2. UPI BUTTON ---
-                    # grayscale=True is safer for these standard buttons
-                    if wait_and_click_indefinitely(UPI_IMAGE, "UPI Button", wait_after=0.1, grayscale=True,
-                                                   confidence=0.8):
+                    # --- 3. PAY BUTTON (STRICT WAIT) ---
+                    if wait_and_click_indefinitely(PAY_BUTTON_IMAGE, "Pay Button", wait_after=0.1, grayscale=False,
+                                                   confidence=0.95):
 
-                        # --- 3. FINAL PAY BUTTON ---
-                        if wait_and_click_indefinitely(FINAL_PAY_BUTTON_IMAGE, "Final Pay Button", wait_after=0.1,
+                        # --- 4. UPI BUTTON ---
+                        if wait_and_click_indefinitely(UPI_IMAGE, "UPI Button", wait_after=0.1, grayscale=True,
                                                        confidence=0.8):
 
-                            # --- 4. SCANNER ---
-                            if wait_and_click_indefinitely(SCANNER_IMAGE, "Scanner", wait_after=0.1, confidence=0.8):
-                                print("[Part 3] Payment Page Complete.")
-                            else:
-                                print("[Part 3] FAILED: Could not find Scanner.")
-                        else:
-                            print("[Part 3] FAILED: Could not find Final Pay Button.")
-                    else:
-                        print("[Part 3] FAILED: Could not find UPI Button.")
-                else:
-                    print("[Part 3] FAILED: Could not find Pay Button.")
+                            # --- 5. FINAL PAY BUTTON ---
+                            if wait_and_click_indefinitely(FINAL_PAY_BUTTON_IMAGE, "Final Pay Button", wait_after=0.1,
+                                                           confidence=0.8):
 
-            else:
-                print("\n[Part 3] Payment Page Skipped (as per config).")
+                                # --- 6. SCANNER ---
+                                if wait_and_click_indefinitely(SCANNER_IMAGE, "Scanner", wait_after=0.1,
+                                                               confidence=0.8):
+                                    print("[Part 3] Payment Page Complete.")
+                                else:
+                                    print("[Part 3] FAILED: Could not find Scanner.")
+                            else:
+                                print("[Part 3] FAILED: Could not find Final Pay Button.")
+                        else:
+                            print("[Part 3] FAILED: Could not find UPI Button.")
+                    else:
+                        print("[Part 3] FAILED: Could not find Pay Button.")
+
+                else:
+                    print("\n[Part 3] Payment Page Skipped (as per config).")
 
         state.reset()
     else:
