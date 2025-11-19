@@ -4,7 +4,7 @@
 # ===================================================================
 
 # --- 1. Main Settings ---
-MANUAL_PAX_COUNT = 5
+MANUAL_PAX_COUNT = 1
 PHONE_NUMBER = '9958815246'
 
 # --- 2. Part 1: First Page Settings ---
@@ -158,8 +158,11 @@ BUTTON_1_IMAGE_NAME = 'target_button.png'
 CHECKBOX_IMAGE_NAME = 'checkbox.png'
 PHONE_BOX_IMAGE_NAME = 'phone_box.png'
 
+# --- NEW: Continue Button Image ---
+CONTINUE_BUTTON_IMAGE_NAME = 'continue_button.png'
+
 # Payment Page Images
-# Note: pay_button2.png MUST be the CLEAR/SHARP image (your 'after.PNG')
+# Note: pay_button2.png MUST be the CLEAR/SHARP image
 PAY_BUTTON_IMAGE_NAME = 'pay_button2.png'
 UPI_IMAGE_NAME = 'upi.png'
 FINAL_PAY_BUTTON_IMAGE_NAME = 'final_pay_button.png'
